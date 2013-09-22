@@ -1,5 +1,9 @@
 package com.xjd.maven.plugin;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -22,6 +26,18 @@ public class JavabeanBuilderGenerator extends AbstractMojo {
 	 * @required
 	 */
 	String classes;
+	
+	/**
+	 * @parameter expression="${outputDirectory}" default-value="${project.build.testSourceDirectory}"
+	 * @required
+	 */
+	String outputDirectory;
+	
+	/**
+	 * @parameter expression="${overwrite}" default-value="false"
+	 * @required
+	 */
+	String overwrite;
 	
 	/**
 	 * @parameter expression="${classPaths}" default-value="${project.build.outputDirectory}"
@@ -49,7 +65,36 @@ public class JavabeanBuilderGenerator extends AbstractMojo {
 		}
 		
 		for (int i = 0; i < clazzArray.length; i++) {
-			
+			try {
+				generateBuilder(clazzArray[i]);
+			} catch (IOException e) {
+				err("", e);
+			}
+		}
+	}
+	
+	protected void generateBuilder(Class clazz) throws IOException {
+		String clazzName = clazz.getName();
+		String builderClazzName = clazzName + "Builder";
+		String builderClazzSimpleName = clazz.getSimpleName() + "Builder";
+		File builderSourceFile = new File(outputDirectory, builderClazzName.replace('.', '/') + ".java");
+		
+		builderSourceFile.getParentFile().mkdirs();
+		boolean noConflict = builderSourceFile.createNewFile();
+		
+		if (noConflict || (!noConflict && "true".equalsIgnoreCase(overwrite))) {
+			FileWriter writer = new FileWriter(builderSourceFile);
+			for (Method method : clazz.getMethods()) {
+				String methodName = method.getName();
+				if (methodName.startsWith("set") && methodName.length() > 3 && method.getParameterTypes().length == 1 && void.class.equals(method.getReturnType())) {
+					String propName = methodName.substring(3, 4).toLowerCase() + methodName.substring(4);
+					writer.write("\tpublic " + builderClazzSimpleName + " " + propName + "(" + method.getParameterTypes()[0].getSimpleName() + " " + propName + ") {\r\n");
+					writer.write("\t\tthis." + propName + " = " + propName + ";\r\n");
+					writer.write("\t\treturn this;\r\n");
+					writer.write("\t}\r\n");
+				}
+			}
+			writer.close();
 		}
 	}
 	
@@ -67,6 +112,14 @@ public class JavabeanBuilderGenerator extends AbstractMojo {
 	
 	protected void info(String msg) {
 		getLog().info(generateLogHead() + msg);
+	}
+	
+	protected void err(String msg) {
+		getLog().error(generateLogHead() + msg);
+	}
+	
+	protected void err(String msg, Throwable t) {
+		getLog().error(generateLogHead() + msg, t);
 	}
 	
 	protected String generateLogHead() {
