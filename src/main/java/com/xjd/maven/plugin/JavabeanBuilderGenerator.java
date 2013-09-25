@@ -76,7 +76,6 @@ public class JavabeanBuilderGenerator extends AbstractMojo {
 	protected void generateBuilder(Class clazz) throws IOException {
 		String clazzName = clazz.getName();
 		String builderClazzName = clazzName + "Builder";
-		String builderClazzSimpleName = clazz.getSimpleName() + "Builder";
 		File builderSourceFile = new File(outputDirectory, builderClazzName.replace('.', '/') + ".java");
 		
 		builderSourceFile.getParentFile().mkdirs();
@@ -84,16 +83,7 @@ public class JavabeanBuilderGenerator extends AbstractMojo {
 		
 		if (noConflict || (!noConflict && "true".equalsIgnoreCase(overwrite))) {
 			FileWriter writer = new FileWriter(builderSourceFile);
-			for (Method method : clazz.getMethods()) {
-				String methodName = method.getName();
-				if (methodName.startsWith("set") && methodName.length() > 3 && method.getParameterTypes().length == 1 && void.class.equals(method.getReturnType())) {
-					String propName = methodName.substring(3, 4).toLowerCase() + methodName.substring(4);
-					writer.write("\tpublic " + builderClazzSimpleName + " " + propName + "(" + method.getParameterTypes()[0].getSimpleName() + " " + propName + ") {\r\n");
-					writer.write("\t\tthis." + propName + " = " + propName + ";\r\n");
-					writer.write("\t\treturn this;\r\n");
-					writer.write("\t}\r\n");
-				}
-			}
+			BuilderGenerator.generate(ClassInfo.inspect(clazz), writer);
 			writer.close();
 		}
 	}
