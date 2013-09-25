@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>bean-builder-generator-maven-plugin</artifactId>
 	<groupId>com.xjd.bean.builder.generator</groupId>
-	<version>1.0</version>
+	<version>1.1</version>
 	<packaging>maven-plugin</packaging>
 	<name>bean-builder-generator</name>
 	<properties>
