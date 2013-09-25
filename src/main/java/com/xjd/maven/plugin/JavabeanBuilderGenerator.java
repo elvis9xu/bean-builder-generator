@@ -62,6 +62,13 @@ public class JavabeanBuilderGenerator extends AbstractMojo {
 			} catch (ClassNotFoundException e) {
 				throw new MojoExecutionException("类加载失败！", e);
 			}
+			try {
+				clazzArray[i].getConstructor(null);
+			} catch (SecurityException e) {
+				throw new MojoExecutionException("", e);
+			} catch (NoSuchMethodException e) {
+				throw new MojoExecutionException("类没有公有的无参构造函数！", e);
+			}
 		}
 		
 		for (int i = 0; i < clazzArray.length; i++) {
